@@ -5,10 +5,7 @@ import os
 import sys
 import requests
 import BeautifulSoup
-<<<<<<< HEAD
-=======
 import argparse
->>>>>>> refs/remotes/origin/master
 import random
 import string
 from time import sleep
@@ -17,14 +14,9 @@ from Queue import Queue
 from threading import Thread
 from urlparse import urlparse
 from flask import Flask
-<<<<<<< HEAD
-=======
 from socket import error as SocketError
->>>>>>> refs/remotes/origin/master
 
 
-
-# bump
 # Start Flask
 api = Flask(__name__)
 
@@ -121,28 +113,17 @@ def api_start():
 
 def api_queuelist():
     """ Api Method that return the number of remaining itens in queue """
-<<<<<<< HEAD
     return str(len(link_queue)) + '\n'
-=======
-    return str(len(link_queue))+'\n'
->>>>>>> refs/remotes/origin/master
 
 
 def api_rqps():
     """ Api method to print the MAX_THREADS var """
-<<<<<<< HEAD
     return str(max_rqps) + '\n'
-=======
-    return str(max_rqps)+'\n'
->>>>>>> refs/remotes/origin/master
 
 
 def api_stop():
     """ Api method to stop scrapping and exit the program """
-<<<<<<< HEAD
     global link_queue
-=======
->>>>>>> refs/remotes/origin/master
     link_queue = deque()
     core_config["terminate"] = True
     return 'OK'
@@ -180,7 +161,6 @@ def getputrank(url, domain_s):
     parse the received html for another links on the same domain
     and add them to the scrapping pool """
     if domain_s != get_domain(url) or url in processed:
-<<<<<<< HEAD
         return
     #sys.stdout.write('\r'+url+'\n')
     agent_info = {'User-Agent': rand_ua()}
@@ -192,8 +172,6 @@ def getputrank(url, domain_s):
     result[url] = site_request.status_code
     if 'cloudflare' in site_request.text:
         print('challenged by cloudflare')
-        return
-=======
         return
     #sys.stdout.write('\r'+url+'\n')
     agent_info = {'User-Agent': rand_ua()}
@@ -260,17 +238,8 @@ def rand_ua():
         'Mozilla/5.0 (Windows NT 5.1; U; pl; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6 Opera 11.00',
         'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
         'Googlebot/2.1 (+http://www.googlebot.com/bot.html)',
-<<<<<<< HEAD
         'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)']
     return agent_list[random.randint(0, len(agent_list) - 1)]
-=======
-        'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)'
-        ]
-    return agent_list[random.randint(0, len(agent_list)-1)]
-
-def get_args(parser):
-    pass
->>>>>>> refs/remotes/origin/master
 
 
 def main():
@@ -278,31 +247,10 @@ def main():
     pool = ThreadPool(max_rqps)
     domain = get_domain(sys.argv[1])
     link_queue.append(sys.argv[1])
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 4b2ba6d
-    #parser = argparse.ArgumentParser(
-    #    description='Python http scrapping load generator')
-    #parser.add_argument('--host_arg',  help='Host to attack')
-    #args = parser.parse_args()
-    #print(args.host_arg)
-    #return
-<<<<<<< HEAD
-=======
-    parser = argparse.ArgumentParser(
-        description='Python http scrapping load generator')
-    parser.add_argument('--host_arg',  help='Host to attack')
-    args = parser.parse_args()
-    print(args.host_arg)
-    return
->>>>>>> refs/remotes/origin/master
-=======
->>>>>>> 4b2ba6d
     # We need 1 slot in that pool for our flask app
     # api.run(host='0.0.0.0', port=5000, debug=True)
     # Threads of threads of threads....
-    pool.add_task(api.run, host='0.0.0.0', port=5001)
+    pool.add_task(api.run, host='0.0.0.0', port=5000)
     while core_config["terminate"] is False:
         try:
             if core_config["pause"]:
