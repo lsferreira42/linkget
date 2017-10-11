@@ -5,7 +5,6 @@ import os
 import sys
 import requests
 import BeautifulSoup
-import argparse
 import random
 import string
 from time import sleep
@@ -123,7 +122,6 @@ def api_rqps():
 
 def api_stop():
     """ Api method to stop scrapping and exit the program """
-    global link_queue
     link_queue = deque()
     core_config["terminate"] = True
     return 'OK'
@@ -132,11 +130,6 @@ def api_stop():
 def api_terminate():
     """ Api method to force terminate of everything and hoppefully do a clean
     interpreter shutdown """
-<<<<<<< HEAD
-    global processed
-    global link_queue
-=======
->>>>>>> refs/remotes/origin/master
     processed = []
     link_queue = deque()
     core_config["terminate"] = True
@@ -181,7 +174,6 @@ def getputrank(url, domain_s):
         return
     processed.append(url)
     result[url] = site_request.status_code
->>>>>>> refs/remotes/origin/master
     try:
         soup = BeautifulSoup.BeautifulSoup(site_request.text)
 
@@ -193,15 +185,9 @@ def getputrank(url, domain_s):
                     link_queue.append(link.get("href"))
                     print('c')
                 elif str(link.get("href")).startswith('/'):
-<<<<<<< HEAD
-<<<<<<< HEAD
                     link_queue.append(url + link.get("href"))
-=======
-=======
                     print('d')
->>>>>>> 4b2ba6d
                     link_queue.append(url+link.get("href"))
->>>>>>> refs/remotes/origin/master
     except Exception as error:
         logger("Error", error)
     return
