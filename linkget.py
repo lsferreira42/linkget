@@ -4,17 +4,19 @@ from __future__ import print_function
 import os
 import sys
 import requests
-import BeautifulSoup
 import random
 import string
+from bs4 import BeautifulSoup
 from time import sleep
 from collections import deque
-from Queue import Queue
+import queue
 from threading import Thread
-from urlparse import urlparse
+from urllib.parse import urlparse
 from flask import Flask
 from socket import error as SocketError
 
+# YOLO
+requests.packages.urllib3.disable_warnings()
 
 # Start Flask
 api = Flask(__name__)
@@ -73,7 +75,7 @@ class Worker(Thread):
 class ThreadPool(object):
     """ Here is the pool of threads that will execute our worker """
     def __init__(self, num_threads):
-        self.tasks = Queue(num_threads)
+        self.tasks = queue.Queue(num_threads)
         for _ in range(num_threads):
             Worker(self.tasks)
 
@@ -137,10 +139,9 @@ def api_terminate():
     return 'Ok'
 
 
-def logger(logtype, logstr):
+def logger(logtype: str, logstr: str) -> str:
     """ Main logging function """
-    print("{0}: {1}".format(logtype, logstr))
-    pass
+    return("{0}: {1}".format(logtype, logstr))
 
 
 def print_error(error_str):
@@ -157,7 +158,7 @@ def getputrank(url, domain_s):
         return
     #sys.stdout.write('\r'+url+'\n')
     agent_info = {'User-Agent': rand_ua()}
-    site_request = requests.get(url, timeout=get_timeout, headers=agent_info)
+    site_request = requests.get(url, timeout=get_timeout, headers=agent_info, verify=False)
     if site_request.status_code != 200:
         print_error('URL: {0}, STATUS: {1}'.format(url, site_request.status_code))
         return
@@ -168,7 +169,7 @@ def getputrank(url, domain_s):
         return
     #sys.stdout.write('\r'+url+'\n')
     agent_info = {'User-Agent': rand_ua()}
-    site_request = requests.get(url, timeout=get_timeout, headers=agent_info)
+    site_request = requests.get(url, timeout=get_timeout, headers=agent_info, verify=False)
     if site_request.status_code != 200:
         print_error('URL: {0}, STATUS: {1}'.format(url, site_request.status_code))
         return
@@ -179,15 +180,10 @@ def getputrank(url, domain_s):
 
         for link in soup.findAll("a"):
             if not link.get("href") in result:
-                print('a')
                 if str(link.get("href")).startswith('http'):
-                    print('b')
                     link_queue.append(link.get("href"))
-                    print('c')
                 elif str(link.get("href")).startswith('/'):
                     link_queue.append(url + link.get("href"))
-                    print('d')
-                    link_queue.append(url+link.get("href"))
     except Exception as error:
         logger("Error", error)
     return

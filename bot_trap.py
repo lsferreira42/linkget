@@ -20,7 +20,7 @@ def bot(discard=None, trap=None):
     response += "<head>\n"
     response += "<body>\n"
     for i in range(1, 50):
-        response += '<a href="http://localhost:5000/' + id_generator(50) + '">trap</a><br>\n'
+        response += '<a href="http://localhost:8080/' + id_generator(50) + '">trap</a><br>\n'
     response += "</body>\n"
     response += "</head>\n"
     response += "</html>\n"
@@ -29,7 +29,7 @@ def bot(discard=None, trap=None):
 
 
 def main():
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=True)
 
 if __name__ == "__main__":
     sys.exit(main())
