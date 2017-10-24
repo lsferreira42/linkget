@@ -1,16 +1,15 @@
-####!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-from __future__ import print_function
 import os
 import sys
 import requests
 import random
 import string
+import asyncio
+import code
 from bs4 import BeautifulSoup
 from time import sleep
 from collections import deque
-import queue
-from threading import Thread
 from urllib.parse import urlparse
 from flask import Flask
 from socket import error as SocketError
@@ -26,7 +25,7 @@ core_config = {'pause': False,
                'pause_timer': 10,
                'terminate': False,
                'end_test': False
-               }
+              }
 
 # Request timeout
 get_timeout = 60
@@ -51,41 +50,6 @@ if os.getenv('MAX_THREADS'):
 
 # Requests operation
 http_op = ""
-
-
-class Worker(Thread):
-    """ The thread pool worker """
-    def __init__(self, tasks):
-        Thread.__init__(self)
-        self.tasks = tasks
-        self.daemon = True
-        self.start()
-
-    def run(self):
-        while True:
-            func, args, kargs = self.tasks.get()
-            try:
-                func(*args, **kargs)
-            except Exception as error:
-                logger("Error", error)
-            finally:
-                self.tasks.task_done()
-
-
-class ThreadPool(object):
-    """ Here is the pool of threads that will execute our worker """
-    def __init__(self, num_threads):
-        self.tasks = queue.Queue(num_threads)
-        for _ in range(num_threads):
-            Worker(self.tasks)
-
-    def add_task(self, func, *args, **kargs):
-        """ Add a task to the pool """
-        self.tasks.put((func, args, kargs))
-
-    def wait_completion(self):
-        """ Wait for the threads in pool to finish """
-        self.tasks.join()
 
 
 # First steps with the api
@@ -141,7 +105,7 @@ def api_terminate():
 
 def logger(logtype: str, logstr: str) -> str:
     """ Main logging function """
-    return("{0}: {1}".format(logtype, logstr))
+    return "{0}: {1}".format(logtype, logstr)
 
 
 def print_error(error_str):
@@ -150,13 +114,14 @@ def print_error(error_str):
     return
 
 
-def getputrank(url, domain_s):
+async def getputrank(url, domain_s):
     """ This is the function, it will try to download your url
     parse the received html for another links on the same domain
     and add them to the scrapping pool """
     if domain_s != get_domain(url) or url in processed:
         return
-    #sys.stdout.write('\r'+url+'\n')
+    #code.interact(local=dict(globals(), **locals()))
+    sys.stdout.write('\r'+url+'\n')
     agent_info = {'User-Agent': rand_ua()}
     site_request = requests.get(url, timeout=get_timeout, headers=agent_info, verify=False)
     if site_request.status_code != 200:
@@ -176,17 +141,17 @@ def getputrank(url, domain_s):
     processed.append(url)
     result[url] = site_request.status_code
     try:
-        soup = BeautifulSoup.BeautifulSoup(site_request.text)
-
+        soup = BeautifulSoup(site_request.text, "html.parser")
         for link in soup.findAll("a"):
-            if not link.get("href") in result:
-                if str(link.get("href")).startswith('http'):
-                    link_queue.append(link.get("href"))
-                elif str(link.get("href")).startswith('/'):
-                    link_queue.append(url + link.get("href"))
+            link_text = link.get("href")
+            if not link_text in result:
+                if str(link_text).startswith('http'):
+                    link_queue.append(link_text)
+                elif str(link_text).startswith('/'):
+                    link_queue.append(url + link_text)
     except Exception as error:
-        logger("Error", error)
-    return
+        print(logger("Error", error))
+    return 1
 
 
 def get_domain(url):
@@ -226,30 +191,31 @@ def rand_ua():
 
 def main():
     """ Our main function """
-    pool = ThreadPool(max_rqps)
     domain = get_domain(sys.argv[1])
     link_queue.append(sys.argv[1])
+    loop = asyncio.get_event_loop()
     # We need 1 slot in that pool for our flask app
     # api.run(host='0.0.0.0', port=5000, debug=True)
     # Threads of threads of threads....
-    pool.add_task(api.run, host='0.0.0.0', port=5000)
+    #pool.add_task(api.run, host='0.0.0.0', port=5000)
+    #while core_config["terminate"] is False:
+    #    try:
+    #        if core_config["pause"]:
+    #            sleep(float(core_config["pause_timer"]))
+    #            continue
+    #        if len(link_queue) > 0:
+    #            getputrank(link_queue.pop(), domain)
+    #    except KeyboardInterrupt:
+    #        print_error("\nExiting with {0} itens in queue.".format(len(link_queue)))
+    #        break
+    #    except Exception as error:
+    #        print(logger("Error", error))
+    #return 0
     while core_config["terminate"] is False:
-        try:
-            if core_config["pause"]:
-                sleep(float(core_config["pause_timer"]))
-                continue
-            if len(link_queue) > 0:
-                pool.add_task(getputrank, link_queue.pop(), domain)
-        except KeyboardInterrupt:
-            print_error("\nWaiting for the thread pool to exit...")
-            del pool
-            print_error("\nExiting with {0} itens in queue.".format(len(link_queue)))
-            break
-        except Exception as error:
-            logger("Error", error)
-            # will be a query in our http api, soon!
-            # len(link_queue) to get remaining itens
-    return 0
+        if len(link_queue) > 0:
+            getputrank(link_queue.pop(), domain)
+        else:
+            loop.run_until_complete(getputrank(link_queue.pop(), domain))
 
 
 if __name__ == '__main__':
