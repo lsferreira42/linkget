@@ -4,17 +4,19 @@ from __future__ import print_function
 import os
 import sys
 import requests
-import BeautifulSoup
+from bs4 import BeautifulSoup
 import random
 import string
+import urllib3
 from time import sleep
 from collections import deque
-from Queue import Queue
+from queue import Queue
 from threading import Thread
-from urlparse import urlparse
+from urllib.parse import urlparse
 from flask import Flask
 from socket import error as SocketError
 
+urllib3.disable_warnings()
 
 # Start Flask
 api = Flask(__name__)
@@ -157,7 +159,7 @@ def getputrank(url, domain_s):
         return
     #sys.stdout.write('\r'+url+'\n')
     agent_info = {'User-Agent': rand_ua()}
-    site_request = requests.get(url, timeout=get_timeout, headers=agent_info)
+    site_request = requests.get(url, timeout=get_timeout, headers=agent_info, verify=False)
     if site_request.status_code != 200:
         print_error('URL: {0}, STATUS: {1}'.format(url, site_request.status_code))
         return
@@ -165,31 +167,28 @@ def getputrank(url, domain_s):
     result[url] = site_request.status_code
     if 'cloudflare' in site_request.text:
         print('challenged by cloudflare')
+        print(site_request.text)
         return
     #sys.stdout.write('\r'+url+'\n')
     agent_info = {'User-Agent': rand_ua()}
-    site_request = requests.get(url, timeout=get_timeout, headers=agent_info)
+    site_request = requests.get(url, timeout=get_timeout, headers=agent_info, verify=False)
     if site_request.status_code != 200:
         print_error('URL: {0}, STATUS: {1}'.format(url, site_request.status_code))
         return
     processed.append(url)
     result[url] = site_request.status_code
     try:
-        soup = BeautifulSoup.BeautifulSoup(site_request.text)
+        soup = BeautifulSoup(site_request.text)
 
         for link in soup.findAll("a"):
             if not link.get("href") in result:
-                print('a')
                 if str(link.get("href")).startswith('http'):
-                    print('b')
                     link_queue.append(link.get("href"))
-                    print('c')
                 elif str(link.get("href")).startswith('/'):
                     link_queue.append(url + link.get("href"))
-                    print('d')
-                    link_queue.append(url+link.get("href"))
+                    #link_queue.append(url+link.get("href"))
     except Exception as error:
-        logger("Error", error)
+        logger("Error", error + " " + url)
     return
 
 
@@ -221,10 +220,7 @@ def rand_ua():
         'Mozilla/5.0 (compatible, MSIE 11, Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko',
         'Mozilla/4.0 (compatible; MSIE 6.0b; Windows NT 5.0; .NET CLR 1.1.4322)',
         'Opera/9.80 (S60; SymbOS; Opera Tablet/9174; U; en) Presto/2.7.81 Version/10.5',
-        'Mozilla/5.0 (Windows NT 5.1; U; pl; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6 Opera 11.00',
-        'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
-        'Googlebot/2.1 (+http://www.googlebot.com/bot.html)',
-        'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)']
+        'Mozilla/5.0 (Windows NT 5.1; U; pl; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6 Opera 11.00' ]
     return agent_list[random.randint(0, len(agent_list) - 1)]
 
 
